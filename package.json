@@ -34,9 +34,8 @@
     "keybindings": [
       {
         "command": "codeaim.toggleOverlay",
-        "key": "ctrl+shift+a",
-        "mac": "cmd+shift+a",
-        "when": "editorTextFocus"
+        "key": "ctrl+alt+q",
+        "mac": "cmd+alt+q"
       }
     ],
     "viewsContainers": {

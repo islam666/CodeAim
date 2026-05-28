@@ -192,7 +192,7 @@ export function getOverlayHtml(): string {
             <canvas id="gameCanvas"></canvas>
             <div class="prompt" id="prompt">
                 <div class="overlay-title">◎ CodeAim Overlay</div>
-                <div class="prompt-sub">Press <kbd>Ctrl+Shift+A</kbd> to toggle · <kbd>Esc</kbd> to exit</div>
+                <div class="prompt-sub">Press <kbd>Ctrl+Alt+Q</kbd> to toggle · <kbd>Esc</kbd> to exit</div>
             </div>
         </div>
 
@@ -370,6 +370,13 @@ export function getOverlayHtml(): string {
                 }
             }
             if (!hitAny) handleMiss();
+        });
+
+        // ── Esc to close ──
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                vscode.postMessage({ type: 'closeOverlay' });
+            }
         });
 
         // ── Controls ──
