@@ -99,10 +99,16 @@ function openOverlay(context: vscode.ExtensionContext): void {
         highScore?: number;
         leaderboard?: SessionResult[];
         sessionHistory?: number[];
+        url?: string;
     }) => {
         switch (msg.type) {
             case 'closeOverlay':
                 closeOverlay(context);
+                break;
+            case 'openUrl':
+                if (msg.url) {
+                    vscode.env.openExternal(vscode.Uri.parse(msg.url));
+                }
                 break;
             case 'saveSettings':
                 if (msg.settings) {

@@ -164,6 +164,11 @@ export function getOverlayHtml(): string {
         .summary-item-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.35); }
         .summary-item-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
         .summary-actions { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
+        .btn-share {
+            background: #1d9bf0; color: #fff; font-size: 12px;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .btn-share:hover { background: #1a8cd8; opacity: 1; }
 
         /* ── Bottom bar ── */
         .bottom-bar {
@@ -1277,6 +1282,7 @@ export function getOverlayHtml(): string {
                 + '</div>'
                 + '<div class="summary-actions">'
                 + '<button class="btn btn-start" id="replayBtn" style="padding:6px 24px">▶ Play Again</button>'
+                + '<button class="btn btn-share" id="shareBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> Share on X</button>'
                 + '</div>'
                 + '</div>';
 
@@ -1287,6 +1293,26 @@ export function getOverlayHtml(): string {
                 trackingTarget = null; trackingSpeed = 2.5; trackingMaxHp = 5;
                 spawnInterval = settings.spawnInterval || 1200;
                 startGame();
+            });
+
+            // Share on X
+            document.getElementById('shareBtn').addEventListener('click', () => {
+                const modeName = MODE_LABELS[currentMode];
+                const avgRt = avg > 0 ? avg + 'ms avg' : '';
+                const bestRt = bestMs > 0 ? bestMs + 'ms best' : '';
+                const reactionText = avgRt && bestRt ? avgRt + ' · ' + bestRt : (avgRt || bestRt || '');
+                const lines = [
+                    '🎯 Just scored ' + score + ' in CodeAim!',
+                    '',
+                    '🏆 ' + modeName + ' Mode · ' + acc + '% accuracy',
+                    '🔥 ' + bestStreak + ' best streak' + (reactionText ? ' · ' + reactionText : ''),
+                    '⏱ ' + timeStr + ' · ' + hits + ' targets hit',
+                    '',
+                    'Train your aim inside VS Code',
+                ];
+                const tweetText = lines.join('\\n');
+                const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(tweetText);
+                vscode.postMessage({ type: 'openUrl', url });
             });
         }
 
