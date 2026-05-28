@@ -7,121 +7,197 @@ export function getWebviewHtml(webview: vscode.Webview, _extensionUri: vscode.Ur
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--vscode-editor-background, #1e1e1e);
+            background-color: var(--vscode-sideBar-background, var(--vscode-editor-background, #1e1e1e));
             color: var(--vscode-editor-foreground, #d4d4d4);
             font-family: var(--vscode-editor-font-family, 'Segoe UI', sans-serif);
-            font-size: var(--vscode-editor-font-size, 14px);
+            font-size: var(--vscode-editor-font-size, 13px);
             overflow: hidden;
             display: flex;
             flex-direction: column;
             height: 100vh;
+            padding: 0 12px;
         }
 
-        /* Header */
+        /* ── Header ── */
         .header {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--vscode-panel-border, #333);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 14px 4px 10px;
+            border-bottom: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
             flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 8px;
+            color: var(--vscode-terminal-ansiGreen, #4ec9b0);
         }
 
-        .header h1::before {
-            content: '◎';
-            color: #4ec9b0;
-            font-size: 18px;
+        .header p {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground, rgba(255,255,255,0.45));
+            margin-top: 3px;
         }
 
-        /* Stats bar */
-        .stats-bar {
-            padding: 8px 16px;
-            display: flex;
-            gap: 20px;
-            border-bottom: 1px solid var(--vscode-panel-border, #333);
+        /* ── Mode selector ── */
+        .mode-section {
+            padding: 10px 0 8px;
             flex-shrink: 0;
-            font-size: 13px;
-            background: var(--vscode-sideBar-background, #252526);
         }
 
-        .stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .stat-label {
-            font-size: 10px;
+        .section-label {
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--vscode-descriptionForeground, #888);
+            letter-spacing: 1.2px;
+            color: var(--vscode-descriptionForeground, rgba(255,255,255,0.4));
+            margin-bottom: 6px;
         }
 
-        .stat-value {
+        .mode-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+
+        .mode-btn {
+            padding: 8px 6px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 5px;
+            background: transparent;
+            color: rgba(255,255,255,0.55);
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.8);
+        }
+
+        .mode-btn.active {
+            background: rgba(78, 201, 176, 0.15);
+            border-color: var(--vscode-terminal-ansiGreen, #4ec9b0);
+            color: var(--vscode-terminal-ansiGreen, #4ec9b0);
+        }
+
+        .mode-btn .mode-icon { font-size: 14px; }
+        .mode-btn .mode-name { font-size: 11px; }
+
+        /* ── Stats dashboard ── */
+        .stats-section {
+            padding: 8px 0;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.06));
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .stat-card-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--vscode-descriptionForeground, rgba(255,255,255,0.35));
+        }
+
+        .stat-card-value {
             font-size: 18px;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
+            margin-top: 2px;
         }
 
-        .stat-value.score { color: #4ec9b0; }
-        .stat-value.accuracy { color: #569cd6; }
-        .stat-value.streak { color: #ce9178; }
-        .stat-value.reaction { color: #b5cea8; }
-        .stat-value.high-score { color: #dcdcaa; }
+        .sc-score { color: var(--vscode-terminal-ansiGreen, #4ec9b0); }
+        .sc-accuracy { color: var(--vscode-terminal-ansiBlue, #569cd6); }
+        .sc-streak { color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+        .sc-reaction { color: #b5cea8; }
+        .sc-best { color: #c586c0; }
+        .sc-high { color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
 
-        /* Canvas area */
-        .canvas-container {
+        /* ── Settings ── */
+        .settings-section {
+            padding: 10px 0;
             flex: 1;
-            position: relative;
-            overflow: hidden;
+            overflow-y: auto;
         }
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Controls */
-        .controls {
-            padding: 10px 16px;
-            border-top: 1px solid var(--vscode-panel-border, #333);
+        .setting-row {
             display: flex;
-            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 0 2px;
+        }
+
+        .setting-row label {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground, rgba(255,255,255,0.55));
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .setting-control input[type="range"] {
+            width: 80px;
+            accent-color: var(--vscode-terminal-ansiGreen, #4ec9b0);
+        }
+
+        .setting-val {
+            font-size: 11px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--vscode-terminal-ansiGreen, #4ec9b0);
+            min-width: 30px;
+            text-align: right;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            padding: 10px 0 14px;
+            border-top: 1px solid var(--vscode-panel-border, rgba(255,255,255,0.08));
+            display: flex;
+            gap: 6px;
             justify-content: center;
             flex-shrink: 0;
         }
 
         button {
-            padding: 6px 16px;
+            padding: 6px 14px;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 12px;
+            font-weight: 600;
             transition: opacity 0.15s;
         }
-
-        button:hover { opacity: 0.85; }
+        button:hover { opacity: 0.8; }
 
         .btn-start {
-            background: #4ec9b0;
-            color: #1e1e1e;
+            background: var(--vscode-terminal-ansiGreen, #4ec9b0);
+            color: var(--vscode-editor-background, #1e1e1e);
         }
 
         .btn-stop {
@@ -130,71 +206,102 @@ export function getWebviewHtml(webview: vscode.Webview, _extensionUri: vscode.Ur
         }
 
         .btn-reset {
-            background: var(--vscode-button-secondaryBackground, #333);
-            color: var(--vscode-button-secondaryForeground, #ccc);
+            background: var(--vscode-button-secondaryBackground, rgba(255,255,255,0.08));
+            color: var(--vscode-button-secondaryForeground, rgba(255,255,255,0.6));
         }
 
-        /* Overlay messages */
-        .overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .overlay-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            opacity: 0.9;
-        }
-
-        .overlay-subtitle {
-            font-size: 14px;
-            opacity: 0.6;
-        }
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>CodeAim</h1>
+        <h1>◎ CodeAim</h1>
+        <p>Aim trainer inside VS Code — train while you code</p>
     </div>
 
-    <div class="stats-bar">
-        <div class="stat">
-            <span class="stat-label">Score</span>
-            <span class="stat-value score" id="score">0</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Accuracy</span>
-            <span class="stat-value accuracy" id="accuracy">—</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Streak</span>
-            <span class="stat-value streak" id="streak">0</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Avg ms</span>
-            <span class="stat-value reaction" id="reaction">—</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Best ms</span>
-            <span class="stat-value reaction" id="bestReaction">—</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">High Score</span>
-            <span class="stat-value high-score" id="highScore">0</span>
+    <div class="mode-section">
+        <div class="section-label">Training Mode</div>
+        <div class="mode-grid">
+            <button class="mode-btn active" data-mode="click" id="sbTabClick">
+                <span class="mode-icon">◎</span>
+                <span class="mode-name">Click</span>
+            </button>
+            <button class="mode-btn" data-mode="flick" id="sbTabFlick">
+                <span class="mode-icon">⟐</span>
+                <span class="mode-name">Flick</span>
+            </button>
+            <button class="mode-btn" data-mode="tracking" id="sbTabTracking">
+                <span class="mode-icon">◉</span>
+                <span class="mode-name">Track</span>
+            </button>
+            <button class="mode-btn" data-mode="reaction" id="sbTabReaction">
+                <span class="mode-icon">⚡</span>
+                <span class="mode-name">React</span>
+            </button>
         </div>
     </div>
 
-    <div class="canvas-container" id="canvasContainer">
-        <canvas id="gameCanvas"></canvas>
-        <div class="overlay" id="overlay">
-            <div class="overlay-title">Click Start to Begin</div>
-            <div class="overlay-subtitle">Click targets as fast as you can</div>
+    <div class="stats-section">
+        <div class="section-label">Session Stats</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-card-label">Score</div>
+                <div class="stat-card-value sc-score" id="score">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Accuracy</div>
+                <div class="stat-card-value sc-accuracy" id="accuracy">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Streak</div>
+                <div class="stat-card-value sc-streak" id="streak">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Avg ms</div>
+                <div class="stat-card-value sc-reaction" id="reaction">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">Best ms</div>
+                <div class="stat-card-value sc-best" id="bestReaction">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-label">High Score</div>
+                <div class="stat-card-value sc-high" id="highScore">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <div class="section-label">Settings</div>
+        <div class="setting-row">
+            <label>Target Size</label>
+            <div class="setting-control">
+                <input type="range" id="setRadius" min="14" max="50" value="28">
+                <span class="setting-val" id="valRadius">28</span>
+            </div>
+        </div>
+        <div class="setting-row">
+            <label>Target Lifetime</label>
+            <div class="setting-control">
+                <input type="range" id="setLifetime" min="800" max="6000" value="3000" step="100">
+                <span class="setting-val" id="valLifetime">3000</span>
+            </div>
+        </div>
+        <div class="setting-row">
+            <label>Spawn Interval</label>
+            <div class="setting-control">
+                <input type="range" id="setSpawn" min="400" max="3000" value="1200" step="50">
+                <span class="setting-val" id="valSpawn">1200</span>
+            </div>
+        </div>
+        <div class="setting-row">
+            <label>Max Targets</label>
+            <div class="setting-control">
+                <input type="range" id="setMaxTargets" min="1" max="10" value="4">
+                <span class="setting-val" id="valMaxTargets">4</span>
+            </div>
         </div>
     </div>
 
@@ -207,319 +314,136 @@ export function getWebviewHtml(webview: vscode.Webview, _extensionUri: vscode.Ur
     <script>
         const vscode = acquireVsCodeApi();
 
-        // ── Game State ──────────────────────────────────────────
-        let gameRunning = false;
-        let score = 0;
-        let hits = 0;
-        let misses = 0;
-        let shots = 0;
-        let streak = 0;
-        let bestStreak = 0;
-        let highScore = 0;
-        let reactionTimes = [];
-        let bestReactionMs = Infinity;
-        let targets = [];
-        let lastSpawnTime = 0;
-        let spawnInterval = 1200; // ms between spawns
-        let maxTargets = 3;
-        let targetLifetime = 3000; // ms before target disappears
-        let targetRadius = 25;
-        let gameStartTime = 0;
+        // ── Game State ──
+        let score = 0, hits = 0, misses = 0, shots = 0;
+        let streak = 0, bestStreak = 0, highScore = 0;
+        let reactionTimes = [], bestReactionMs = Infinity;
+        let currentMode = 'click';
 
-        // ── DOM Elements ────────────────────────────────────────
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const container = document.getElementById('canvasContainer');
-        const overlay = document.getElementById('overlay');
+        // ── DOM ──
         const scoreEl = document.getElementById('score');
         const accuracyEl = document.getElementById('accuracy');
         const streakEl = document.getElementById('streak');
         const reactionEl = document.getElementById('reaction');
         const bestReactionEl = document.getElementById('bestReaction');
         const highScoreEl = document.getElementById('highScore');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const resetBtn = document.getElementById('resetBtn');
 
-        // ── Canvas Setup ────────────────────────────────────────
-        function resizeCanvas() {
-            const rect = container.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        }
+        // ── Settings DOM ──
+        const setRadius = document.getElementById('setRadius');
+        const setLifetime = document.getElementById('setLifetime');
+        const setSpawn = document.getElementById('setSpawn');
+        const setMaxTargets = document.getElementById('setMaxTargets');
+        const valRadius = document.getElementById('valRadius');
+        const valLifetime = document.getElementById('valLifetime');
+        const valSpawn = document.getElementById('valSpawn');
+        const valMaxTargets = document.getElementById('valMaxTargets');
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // ── Target Class ────────────────────────────────────────
-        class Target {
-            constructor(x, y, radius) {
-                this.x = x;
-                this.y = y;
-                this.radius = radius;
-                this.spawnTime = Date.now();
-                this.hit = false;
-                this.missed = false;
-                this.scale = 0;
-                this.pulsePhase = Math.random() * Math.PI * 2;
-            }
-
-            draw() {
-                const now = Date.now();
-                const age = now - this.spawnTime;
-                const lifeRatio = age / targetLifetime;
-
-                // Animate in
-                if (this.scale < 1) {
-                    this.scale = Math.min(1, this.scale + 0.1);
-                }
-
-                // Fade out near end of life
-                let alpha = 1;
-                if (lifeRatio > 0.7) {
-                    alpha = 1 - (lifeRatio - 0.7) / 0.3;
-                }
-
-                const pulse = 1 + Math.sin(this.pulsePhase + now * 0.003) * 0.05;
-                const r = this.radius * this.scale * pulse;
-
-                // Outer ring
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
-                ctx.strokeStyle = \`rgba(78, 201, 176, \${alpha})\`;
-                ctx.lineWidth = 2.5;
-                ctx.stroke();
-
-                // Middle ring
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, r * 0.65, 0, Math.PI * 2);
-                ctx.strokeStyle = \`rgba(86, 156, 214, \${alpha * 0.8})\`;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Inner dot
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, r * 0.3, 0, Math.PI * 2);
-                ctx.fillStyle = \`rgba(206, 145, 120, \${alpha})\`;
-                ctx.fill();
-
-                // Bullseye
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, r * 0.1, 0, Math.PI * 2);
-                ctx.fillStyle = \`rgba(78, 201, 176, \${alpha})\`;
-                ctx.fill();
-
-                return alpha > 0;
-            }
-
-            isExpired() {
-                return Date.now() - this.spawnTime > targetLifetime;
-            }
-
-            contains(px, py) {
-                const dx = px - this.x;
-                const dy = py - this.y;
-                return dx * dx + dy * dy <= this.radius * this.radius;
-            }
-        }
-
-        // ── Spawning ────────────────────────────────────────────
-        function spawnTarget() {
-            if (!gameRunning) return;
-
-            const rect = container.getBoundingClientRect();
-            const padding = targetRadius + 10;
-            const x = padding + Math.random() * (rect.width - padding * 2);
-            const y = padding + Math.random() * (rect.height - padding * 2);
-
-            targets.push(new Target(x, y, targetRadius));
-            lastSpawnTime = Date.now();
-        }
-
-        // ── Scoring ─────────────────────────────────────────────
-        function handleHit(target, reactionMs) {
-            target.hit = true;
-            hits++;
-            streak++;
-            if (streak > bestStreak) bestStreak = streak;
-            reactionTimes.push(reactionMs);
-            if (reactionMs < bestReactionMs) bestReactionMs = reactionMs;
-
-            // Score formula: base 100 + time bonus + streak bonus
-            const timeBonus = Math.max(0, Math.floor((targetLifetime - reactionMs) / targetLifetime * 50));
-            const streakBonus = Math.min(streak * 5, 50);
-            score += 100 + timeBonus + streakBonus;
-
-            // Speed things up
-            spawnInterval = Math.max(500, spawnInterval - 5);
-        }
-
-        function handleMiss() {
-            misses++;
-            streak = 0;
-        }
-
-        function updateStats() {
+        function updateUI() {
             shots = hits + misses;
-            const accuracy = shots > 0 ? Math.round((hits / shots) * 100) : 0;
-            const avgReaction = reactionTimes.length > 0
-                ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
-                : 0;
-
             scoreEl.textContent = score;
-            accuracyEl.textContent = shots > 0 ? accuracy + '%' : '—';
+            accuracyEl.textContent = shots > 0 ? Math.round(hits/shots*100) + '%' : '—';
             streakEl.textContent = streak;
-            reactionEl.textContent = avgReaction > 0 ? avgReaction + 'ms' : '—';
-            bestReactionEl.textContent = bestReactionMs < Infinity ? bestReactionMs + 'ms' : '—';
-
+            const avg = reactionTimes.length > 0 ? Math.round(reactionTimes.reduce((a,b)=>a+b,0)/reactionTimes.length) : 0;
+            reactionEl.textContent = avg > 0 ? avg + 'ms' : '—';
+            bestReactionEl.textContent = bestReactionMs < Infinity ? Math.round(bestReactionMs) + 'ms' : '—';
             if (score > highScore) {
                 highScore = score;
                 highScoreEl.textContent = highScore;
-                vscode.postMessage({ type: 'highScore', highScore });
             }
-        }
-
-        // ── Game Loop ───────────────────────────────────────────
-        function gameLoop() {
-            if (!gameRunning && targets.length === 0) return;
-
-            const now = Date.now();
-            const rect = container.getBoundingClientRect();
-
-            // Clear
-            ctx.clearRect(0, 0, rect.width, rect.height);
-
-            // Draw subtle grid
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < rect.width; x += 40) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, rect.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < rect.height; y += 40) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(rect.width, y);
-                ctx.stroke();
-            }
-
-            // Spawn targets
-            if (gameRunning && targets.length < maxTargets && now - lastSpawnTime > spawnInterval) {
-                spawnTarget();
-            }
-
-            // Update & draw targets
-            targets = targets.filter(t => {
-                if (t.hit) return false;
-                if (t.isExpired() && !t.missed) {
-                    handleMiss();
-                    t.missed = true;
-                }
-                if (t.missed) return false;
-                t.draw();
-                return true;
-            });
-
-            updateStats();
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        // ── Input Handling ──────────────────────────────────────
-        canvas.addEventListener('mousedown', (e) => {
-            if (!gameRunning) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            // Check targets (reverse order = top-most first)
-            let hitAny = false;
-            for (let i = targets.length - 1; i >= 0; i--) {
-                if (targets[i].contains(x, y)) {
-                    const reactionMs = Date.now() - targets[i].spawnTime;
-                    handleHit(targets[i], reactionMs);
-                    targets.splice(i, 1);
-                    hitAny = true;
-                    break;
-                }
-            }
-
-            if (!hitAny) {
-                handleMiss();
-            }
-        });
-
-        // ── Controls ────────────────────────────────────────────
-        function startGame() {
-            if (gameRunning) return;
-            gameRunning = true;
-            gameStartTime = Date.now();
-            lastSpawnTime = 0;
-            overlay.style.display = 'none';
-            gameLoop();
-        }
-
-        function stopGame() {
-            gameRunning = false;
-            targets = [];
-            overlay.style.display = 'block';
-            overlay.innerHTML = '<div class="overlay-title">Session Over</div><div class="overlay-subtitle">Score: ' + score + ' | Best Streak: ' + bestStreak + '</div>';
         }
 
         function resetStats() {
-            score = 0;
-            hits = 0;
-            misses = 0;
-            shots = 0;
-            streak = 0;
-            bestStreak = 0;
-            reactionTimes = [];
+            score = 0; hits = 0; misses = 0; shots = 0;
+            streak = 0; bestStreak = 0; reactionTimes = [];
             bestReactionMs = Infinity;
-            spawnInterval = 1200;
-            targets = [];
-            gameRunning = false;
-            overlay.style.display = 'block';
-            overlay.innerHTML = '<div class="overlay-title">Click Start to Begin</div><div class="overlay-subtitle">Click targets as fast as you can</div>';
-            updateStats();
+            updateUI();
         }
 
-        startBtn.addEventListener('click', startGame);
-        stopBtn.addEventListener('click', stopGame);
-        resetBtn.addEventListener('click', resetStats);
+        // ── Mode switching ──
+        const MODE_DESCRIPTIONS = {
+            click: 'Click targets as fast as they appear',
+            flick: 'Flick between targets in sequence',
+            tracking: 'Click the moving target to drain its HP',
+            reaction: 'Wait for green, then click as fast as possible'
+        };
 
-        // ── VS Code Extension Messages ──────────────────────────
-        window.addEventListener('message', (event) => {
-            const msg = event.data;
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sbTab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            resetStats();
+        }
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+        });
+
+        // ── Settings controls ──
+        [setRadius, setLifetime, setSpawn, setMaxTargets].forEach(el => {
+            el.addEventListener('input', () => {
+                valRadius.textContent = setRadius.value;
+                valLifetime.textContent = setLifetime.value;
+                valSpawn.textContent = setSpawn.value;
+                valMaxTargets.textContent = setMaxTargets.value;
+                vscode.postMessage({
+                    type: 'saveSettings',
+                    settings: {
+                        targetRadius: parseInt(setRadius.value),
+                        targetLifetime: parseInt(setLifetime.value),
+                        spawnInterval: parseInt(setSpawn.value),
+                        maxTargets: parseInt(setMaxTargets.value),
+                    }
+                });
+            });
+        });
+
+        // ── Buttons ──
+        document.getElementById('startBtn').addEventListener('click', () => vscode.postMessage({ type: 'start' }));
+        document.getElementById('stopBtn').addEventListener('click', () => vscode.postMessage({ type: 'stop' }));
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            vscode.postMessage({ type: 'stop' });
+            resetStats();
+        });
+
+        // ── Messages from extension ──
+        window.addEventListener('message', e => {
+            const msg = e.data;
             switch (msg.type) {
-                case 'start': startGame(); break;
-                case 'stop': stopGame(); break;
+                case 'stats':
+                    if (msg.stats) {
+                        score = msg.stats.score || 0;
+                        hits = msg.stats.hits || 0;
+                        misses = msg.stats.misses || 0;
+                        streak = msg.stats.streak || 0;
+                        bestStreak = msg.stats.bestStreak || 0;
+                        if (msg.stats.score > highScore) highScore = msg.stats.score;
+                        updateUI();
+                    }
+                    break;
                 case 'resetStats': resetStats(); break;
-                case 'resetHighScore':
-                    highScore = 0;
-                    highScoreEl.textContent = '0';
+                case 'highScore':
+                    if (msg.highScore !== undefined) {
+                        highScore = msg.highScore;
+                        highScoreEl.textContent = highScore;
+                    }
+                    break;
+                case 'loadSettings':
+                    if (msg.settings) {
+                        setRadius.value = msg.settings.targetRadius || 28;
+                        setLifetime.value = msg.settings.targetLifetime || 3000;
+                        setSpawn.value = msg.settings.spawnInterval || 1200;
+                        setMaxTargets.value = msg.settings.maxTargets || 4;
+                        valRadius.textContent = setRadius.value;
+                        valLifetime.textContent = setLifetime.value;
+                        valSpawn.textContent = setSpawn.value;
+                        valMaxTargets.textContent = setMaxTargets.value;
+                    }
                     break;
             }
         });
 
-        // ── Initial draw ────────────────────────────────────────
-        function initialDraw() {
-            const rect = container.getBoundingClientRect();
-            ctx.clearRect(0, 0, rect.width, rect.height);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < rect.width; x += 40) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, rect.height); ctx.stroke();
-            }
-            for (let y = 0; y < rect.height; y += 40) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(rect.width, y); ctx.stroke();
-            }
-        }
-        initialDraw();
+        // ── Init ──
+        updateUI();
     </script>
 </body>
 </html>`;

@@ -15,9 +15,10 @@ export interface GameStats {
 }
 
 export interface GameMessage {
-    type: 'start' | 'stop' | 'resetStats' | 'resetHighScore' | 'stats' | 'highScore';
+    type: 'start' | 'stop' | 'resetStats' | 'resetHighScore' | 'stats' | 'highScore' | 'loadSettings' | 'saveSettings';
     stats?: GameStats;
     highScore?: number;
+    settings?: { targetRadius: number; targetLifetime: number; spawnInterval: number; maxTargets: number };
 }
 
 export class CodeAimProvider implements vscode.WebviewViewProvider {
@@ -68,6 +69,10 @@ export class CodeAimProvider implements vscode.WebviewViewProvider {
     async resetHighScore(): Promise<void> {
         await this.context.globalState.update('codeaim.highScore', 0);
         this.postMessage({ type: 'resetHighScore' });
+    }
+
+    sendSettings(settings: { targetRadius: number; targetLifetime: number; spawnInterval: number; maxTargets: number }): void {
+        this.postMessage({ type: 'loadSettings', settings });
     }
 
     private postMessage(message: GameMessage): void {

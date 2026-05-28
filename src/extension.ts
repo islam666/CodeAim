@@ -2,6 +2,13 @@ import * as vscode from 'vscode';
 import { CodeAimProvider } from './codeAimProvider';
 import { getOverlayHtml } from './overlayHtml';
 
+interface OverlaySettings {
+    targetRadius: number;
+    targetLifetime: number;
+    spawnInterval: number;
+    maxTargets: number;
+}
+
 let provider: CodeAimProvider | undefined;
 let overlayPanel: vscode.WebviewPanel | undefined;
 let statusBarItem: vscode.StatusBarItem;
@@ -18,12 +25,21 @@ export function activate(context: vscode.ExtensionContext): void {
     // Status bar item for overlay toggle
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.text = '◎ CodeAim';
-    statusBarItem.tooltip = 'Click to toggle overlay mode (Ctrl+Shift+A)';
+    statusBarItem.tooltip = 'Click to toggle overlay mode (Ctrl+Alt+Q)';
     statusBarItem.command = 'codeaim.toggleOverlay';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
-    // Commands
+    // Load saved settings
+    const savedSettings = context.globalState.get<OverlaySettings>('codeaim.settings', {
+        targetRadius: 28,
+        targetLifetime: 3000,
+        spawnInterval: 1200,
+        maxTargets: 4,
+    });
+
+    // ── Commands ──
+
     context.subscriptions.push(
         vscode.commands.registerCommand('codeaim.start', () => {
             if (overlayPanel) {
@@ -62,6 +78,13 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         })
     );
+
+    // Send saved settings to sidebar
+    setTimeout(() => {
+        if (provider) {
+            provider.sendSettings(savedSettings);
+        }
+    }, 500);
 }
 
 function openOverlay(context: vscode.ExtensionContext): void {
@@ -80,14 +103,27 @@ function openOverlay(context: vscode.ExtensionContext): void {
     overlayPanel.webview.html = getOverlayHtml();
 
     // Handle messages from overlay webview
-    overlayPanel.webview.onDidReceiveMessage((msg: { type: string }) => {
-        if (msg.type === 'closeOverlay') {
-            closeOverlay(context);
+    overlayPanel.webview.onDidReceiveMessage(async (msg: { type: string; settings?: OverlaySettings; highScore?: number }) => {
+        switch (msg.type) {
+            case 'closeOverlay':
+                closeOverlay(context);
+                break;
+            case 'saveSettings':
+                if (msg.settings) {
+                    await context.globalState.update('codeaim.settings', msg.settings);
+                    // Also sync to sidebar
+                    if (provider) {
+                        provider.sendSettings(msg.settings);
+                    }
+                }
+                break;
+            case 'highScore':
+                if (msg.highScore !== undefined) {
+                    await context.globalState.update('codeaim.highScore', msg.highScore);
+                }
+                break;
         }
     });
-
-    // Handle Esc key by registering a temporary command
-    // (Esc is caught in the webview via keydown listener in HTML)
 
     overlayPanel.onDidDispose(() => {
         overlayPanel = undefined;
@@ -96,12 +132,25 @@ function openOverlay(context: vscode.ExtensionContext): void {
 
     updateStatusBar(true);
 
-    // Load high score
+    // Load settings and high score
+    const settings = context.globalState.get<OverlaySettings>('codeaim.settings', {
+        targetRadius: 28,
+        targetLifetime: 3000,
+        spawnInterval: 1200,
+        maxTargets: 4,
+    });
     const hs = context.globalState.get<number>('codeaim.highScore', 0);
-    overlayPanel.webview.postMessage({ type: 'highScore', highScore: hs });
+
+    // Send after a short delay to ensure webview is ready
+    setTimeout(() => {
+        if (overlayPanel) {
+            overlayPanel.webview.postMessage({ type: 'loadSettings', settings });
+            overlayPanel.webview.postMessage({ type: 'highScore', highScore: hs });
+        }
+    }, 200);
 }
 
-function closeOverlay(context: vscode.ExtensionContext): void {
+function closeOverlay(_context: vscode.ExtensionContext): void {
     if (overlayPanel) {
         overlayPanel.dispose();
         overlayPanel = undefined;
