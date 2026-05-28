@@ -1,0 +1,62 @@
+{
+  "name": "codeaim",
+  "displayName": "CodeAim",
+  "description": "A lightweight aim trainer inside VS Code — practice your aim while you code",
+  "version": "0.1.0",
+  "publisher": "codeaim",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Education"],
+  "keywords": ["aim", "trainer", "game", "fps", "aimlabs", "kovaaks", "reaction", "reflex"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeaim.start",
+        "title": "CodeAim: Start Training",
+        "icon": "$(target)"
+      },
+      {
+        "command": "codeaim.stop",
+        "title": "CodeAim: Stop Training"
+      },
+      {
+        "command": "codeaim.resetScore",
+        "title": "CodeAim: Reset High Score"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codeaim-sidebar",
+          "title": "CodeAim",
+          "icon": "$(target)"
+        }
+      ]
+    },
+    "views": {
+      "codeaim-sidebar": [
+        {
+          "type": "webview",
+          "id": "codeaim.panel",
+          "name": "Aim Trainer"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}
