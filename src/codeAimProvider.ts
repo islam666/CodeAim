@@ -44,11 +44,9 @@ export class CodeAimProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = getWebviewHtml(webviewView.webview, this.extensionUri);
 
-        // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage((message: GameMessage) => {
             switch (message.type) {
                 case 'stats':
-                    // Stats updated from webview — could persist per-session
                     break;
                 case 'highScore':
                     if (message.highScore !== undefined) {

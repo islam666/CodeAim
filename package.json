@@ -25,6 +25,18 @@
       {
         "command": "codeaim.resetScore",
         "title": "CodeAim: Reset High Score"
+      },
+      {
+        "command": "codeaim.toggleOverlay",
+        "title": "CodeAim: Toggle Overlay Mode"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "codeaim.toggleOverlay",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "editorTextFocus"
       }
     ],
     "viewsContainers": {
