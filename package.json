@@ -2,14 +2,19 @@
   "name": "codeaim",
   "displayName": "CodeAim",
   "description": "A lightweight aim trainer inside VS Code — practice your aim while you code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "codeaim",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other", "Education"],
-  "keywords": ["aim", "trainer", "game", "fps", "aimlabs", "kovaaks", "reaction", "reflex"],
-  "activationEvents": [],
+  "categories": ["Games", "Education"],
+  "keywords": ["aim", "trainer", "game", "fps", "aimlabs", "kovaaks", "reaction", "reflex", "aim trainer"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/islam666/CodeAim.git"
+  },
+  "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -58,7 +63,7 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && cp -r webview out/",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "package": "vsce package",
