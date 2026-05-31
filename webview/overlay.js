@@ -182,60 +182,26 @@ function spawnParticles(x, y, color, count) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  GHOST TRAIL
+//  GHOST TRAIL — DISABLED
 // ═══════════════════════════════════════════════════════════════
+// Removed per user request — the dot + trailing effect was causing
+// crosshair alignment confusion. The SVG DOM crosshair is now the
+// sole cursor indicator.
 function updateGhostTrail(mx, my) {
-    if (lastGhostPos) {
-        const dx = mx - lastGhostPos.x, dy = my - lastGhostPos.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist >= GHOST_SPACING) {
-            const steps = Math.floor(dist / GHOST_SPACING);
-            for (let i = 1; i <= steps; i++) {
-                const t = i / (steps + 1);
-                mouseHistory.push({ x: lastGhostPos.x + dx * t, y: lastGhostPos.y + dy * t });
-            }
-            lastGhostPos = { x: mx, y: my };
-        }
-    } else { lastGhostPos = { x: mx, y: my }; }
-    mouseHistory.push({ x: mx, y: my });
-    while (mouseHistory.length > GHOST_MAX) mouseHistory.shift();
-}
-function drawGhostTrail() {
-    for (let i = 0; i < mouseHistory.length; i++) {
-        const t = i / mouseHistory.length;
-        const r = 1.5 + t * 2;
-        ctx.beginPath();
-        ctx.arc(mouseHistory[i].x, mouseHistory[i].y, r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(78, 201, 176, ' + (t * 0.35) + ')';
-        ctx.fill();
-    }
+    // no-op — ghost trail removed
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CUSTOM CROSSHAIR + ACCURACY RING
+//  CUSTOM CROSSHAIR
 // ═══════════════════════════════════════════════════════════════
 let crosshairX = -100, crosshairY = -100;
 function updateCrosshair(x, y) {
     crosshairX = x; crosshairY = y;
     crosshair.style.left = x + 'px';
     crosshair.style.top = y + 'px';
+    crosshair.style.display = 'block';
     accRing.style.left = x + 'px';
     accRing.style.top = y + 'px';
-}
-function drawCrosshair() {
-    const size = 12, gap = 4, thick = 2;
-    ctx.strokeStyle = 'rgba(78, 201, 176, 0.8)';
-    ctx.lineWidth = thick;
-    ctx.beginPath();
-    ctx.moveTo(crosshairX - size, crosshairY); ctx.lineTo(crosshairX - gap, crosshairY);
-    ctx.moveTo(crosshairX + gap, crosshairY); ctx.lineTo(crosshairX + size, crosshairY);
-    ctx.moveTo(crosshairX, crosshairY - size); ctx.lineTo(crosshairX, crosshairY - gap);
-    ctx.moveTo(crosshairX, crosshairY + gap); ctx.lineTo(crosshairX, crosshairY + size);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(crosshairX, crosshairY, 1.5, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(78, 201, 176, 0.9)';
-    ctx.fill();
 }
 function drawAccuracyRing() {
     if (shots < 3) return;
@@ -285,6 +251,7 @@ class Target {
         this.reactionGreen = opts.reactionGreen || false;
         this.isFlick = this.mode === 'flick';
         this.isTracking = this.mode === 'tracking';
+        if (this.isFlick) this.scale = 1;
         if (this.isTracking) {
             const angle = Math.random() * Math.PI * 2;
             this.vx = Math.cos(angle) * trackingSpeed;
@@ -459,6 +426,11 @@ function handleHit(target, ms) {
         if (target.hp <= 0) {
             score += 200;
             playStreakSound(Math.min(streak, 20));
+            // Remove dead tracking target immediately so it doesn't block respawn
+            target.hit = true;
+            target.deathAnim = 1;
+            const idx = targets.indexOf(target);
+            if (idx >= 0) targets.splice(idx, 1);
             trackingTarget = null;
             trackingSpeed = Math.min(trackingSpeed + 0.3, 6);
             trackingMaxHp = Math.min(trackingMaxHp + 1, 12);
@@ -599,8 +571,6 @@ function loop() {
     const rect = wrap.getBoundingClientRect();
     ctx.clearRect(0, 0, rect.width, rect.height);
 
-    drawGhostTrail();
-
     // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.02)';
     ctx.lineWidth = 1;
@@ -622,6 +592,7 @@ function loop() {
     const now = Date.now();
     if (gameRunning) {
         if (currentMode === 'reaction') { /* handled by idle timer */ }
+        else if (currentMode === 'flick') { /* flick targets only spawned on hit + initial */ }
         else if (currentMode === 'tracking') { if (!trackingTarget && targets.length === 0) spawn(); }
         else if (targets.length < maxTargets && now - lastSpawnTime > spawnInterval) spawn();
     }
@@ -656,7 +627,6 @@ function loop() {
         ctx.restore();
     }
 
-    drawCrosshair();
     drawAccuracyRing();
 
     updateUI();
@@ -810,6 +780,7 @@ function startGame() {
     ensureAudio();
 
     if (currentMode === 'reaction') startReactionIdle();
+    if (currentMode === 'flick') { lastSpawnTime = 0; spawn(); }
     if (warmupEnabled) {
         startWarmup();
     } else {
