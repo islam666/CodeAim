@@ -71,13 +71,15 @@ export function activate(context: vscode.ExtensionContext): void {
         })
     );
 
-    // Send saved settings + leaderboard to sidebar
+    // Send saved settings + leaderboard + high score to sidebar
     setTimeout(() => {
         if (provider) {
             provider.sendSettings(savedSettings);
             const lb = context.globalState.get<Array<{score:number;mode:string;acc:number;time:string;bestStreak:number;avgReaction:number;bestReaction:number;hits:number}>>('codeaim.leaderboard', []);
             const sh = context.globalState.get<number[]>('codeaim.sessionHistory', []);
+            const hs = context.globalState.get<number>('codeaim.highScore', 0);
             provider.sendLeaderboard(lb, sh);
+            provider.sendHighScore(hs);
         }
     }, 500);
 }
@@ -113,7 +115,7 @@ function openOverlay(context: vscode.ExtensionContext): void {
             case 'saveSettings':
                 if (msg.settings) {
                     await context.globalState.update('codeaim.settings', msg.settings);
-                    if (provider) provider?.sendSettings(msg.settings);
+                    if (provider) provider.sendSettings(msg.settings);
                 }
                 break;
             case 'highScore':

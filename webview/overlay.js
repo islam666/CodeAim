@@ -49,12 +49,6 @@ let trackingSpeed = 2.5;
 let reactionIdle = true;
 let reactionIdleTimer = null;
 
-// ── Ghost trail ──
-let mouseHistory = [];
-const GHOST_MAX = 14;
-const GHOST_SPACING = 3;
-let lastGhostPos = null;
-
 // ── Particles ──
 let particles = [];
 
@@ -79,6 +73,7 @@ const comboCounter = document.getElementById('comboCounter');
 const comboNum = document.getElementById('comboNum');
 const warmupBanner = document.getElementById('warmupBanner');
 const warmupText = document.getElementById('warmupText');
+const warmupSub = document.getElementById('warmupSub');
 const soundBtn = document.getElementById('soundBtn');
 
 // ═══════════════════════════════════════════════════════════════
@@ -376,7 +371,13 @@ function spawn() {
 //  HIT / MISS
 // ═══════════════════════════════════════════════════════════════
 function handleHit(target, ms) {
-    target.hit = true;
+    const isTracking = target.isTracking;
+
+    // Tracking targets stay alive until HP reaches 0 — don't start death animation yet
+    if (!isTracking) {
+        target.hit = true;
+    }
+
     hits++; streak++;
     if (streak > bestStreak) bestStreak = streak;
     reactionTimes.push(ms);
@@ -445,8 +446,8 @@ function handleMiss() {
 
     const miss = document.createElement('div');
     miss.className = 'miss-indicator';
-    miss.style.left = (lastClickX || crosshairX) + 'px';
-    miss.style.top = (lastClickY || crosshairY) + 'px';
+    miss.style.left = (lastClickX ?? crosshairX) + 'px';
+    miss.style.top = (lastClickY ?? crosshairY) + 'px';
     miss.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20"><line x1="4" y1="4" x2="16" y2="16" stroke="#f14c4c" stroke-width="2.5" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="#f14c4c" stroke-width="2.5" stroke-linecap="round"/></svg>';
     wrap.appendChild(miss);
     setTimeout(() => miss.remove(), 600);
@@ -598,7 +599,7 @@ function loop() {
     }
 
     // Tracking movement
-    if (currentMode === 'tracking' && trackingTarget && !trackingTarget.hit) {
+    if (currentMode === 'tracking' && trackingTarget && trackingTarget.hp > 0) {
         trackingTarget.x += trackingTarget.vx;
         trackingTarget.y += trackingTarget.vy;
         const pad = targetRadius + 5;
@@ -668,9 +669,13 @@ canvas.addEventListener('mousedown', e => {
     for (let i = sortedTargets.length - 1; i >= 0; i--) {
         if (sortedTargets[i].contains(x, y)) {
             const ms = Date.now() - sortedTargets[i].spawnTime;
+            const isTrackingTarget = sortedTargets[i].isTracking;
             handleHit(sortedTargets[i], ms);
-            const idx = targets.indexOf(sortedTargets[i]);
-            if (idx >= 0) targets.splice(idx, 1);
+            // Only splice non-tracking targets (or tracking targets that just died)
+            if (!isTrackingTarget || sortedTargets[i].hp <= 0) {
+                const idx = targets.indexOf(sortedTargets[i]);
+                if (idx >= 0) targets.splice(idx, 1);
+            }
             hitAny = true;
             if (currentMode === 'reaction') { reactionIdle = false; startReactionIdle(); }
             break;
@@ -853,15 +858,7 @@ function stopGame() {
         const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(tweetText);
         vscode.postMessage({ type: 'openUrl', url });
     });
-
-    // Save leaderboard
-    vscode.postMessage({
-        type: 'saveLeaderboard',
-        leaderboard: [],  // Overley doesn't track leaderboard internally; extension handles it
-        sessionHistory: []
-    });
 }
-
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('stopBtn').addEventListener('click', stopGame);
 document.getElementById('exitBtn').addEventListener('click', () => {

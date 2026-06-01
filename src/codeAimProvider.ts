@@ -103,6 +103,10 @@ export class CodeAimProvider implements vscode.WebviewViewProvider {
         this.postMessage({ type: 'loadLeaderboard', leaderboard, sessionHistory });
     }
 
+    sendHighScore(highScore: number): void {
+        this.postMessage({ type: 'highScore', highScore });
+    }
+
     private postMessage(message: GameMessage): void {
         if (this.view) {
             this.view.webview.postMessage(message);
